@@ -1,5 +1,6 @@
 package mtr.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import mtr.client.IDrawing;
 import mtr.data.IGui;
 import mtr.data.Route;
@@ -8,7 +9,7 @@ import mtr.mappings.ScreenMapper;
 import mtr.mappings.Text;
 import mtr.mappings.UtilitiesClient;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -136,30 +137,30 @@ public class RoutePlatformScreen extends ScreenMapper implements IGui {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-		guiGraphics.fill(0, 0, width, height, 0xE6101010);
+	public void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
+		Gui.fill(matrices, 0, 0, width, height, 0xE6101010);
 
 		final float elapsed = (Util.getMillis() - startTime) / 1000f;
 		final float animT = Math.min(1, elapsed / 0.3f);
 		final float eased = easeOutCubic(animT);
 		final int headW = (int) (eased * width);
 
-		guiGraphics.fill(0, 0, headW, HEADER_H, routeColor | 0xFF000000);
+		Gui.fill(matrices, 0, 0, headW, HEADER_H, routeColor | 0xFF000000);
 
 		final int textColor = isColorLight(routeColor) ? 0xFF000000 : 0xFFFFFFFF;
 
 		final int textX = PAD;
 		final String label = Text.translatable("gui.mtr.route_name").getString();
-		guiGraphics.drawString(font, label, textX, 6, (textColor & 0x00FFFFFF) | 0x80000000);
-		guiGraphics.drawString(font, routeName, textX, 22, textColor);
+		drawString(matrices, font, label, textX, 6, (textColor & 0x00FFFFFF) | 0x80000000);
+		drawString(matrices, font, routeName, textX, 22, textColor);
 
 		final String info = stationName + "  >  " + platformName;
-		guiGraphics.drawCenteredString(font, info, width / 2, HEADER_H + 8, 0xFFAAAAAA);
+		drawCenteredString(matrices, font, info, width / 2, HEADER_H + 8, 0xFFAAAAAA);
 
 		final int sepY = height - 36;
-		guiGraphics.fill(PAD, sepY, width - PAD, sepY + 1, 0x25FFFFFF);
+		Gui.fill(matrices, PAD, sepY, width - PAD, sepY + 1, 0x25FFFFFF);
 
-		super.render(guiGraphics, mouseX, mouseY, delta);
+		super.render(matrices, mouseX, mouseY, delta);
 	}
 
 	@Override

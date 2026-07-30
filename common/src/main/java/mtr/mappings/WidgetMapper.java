@@ -1,6 +1,6 @@
 package mtr.mappings;
 
-import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.Widget;
 
-public interface WidgetMapper extends Renderable {
+public interface WidgetMapper extends Widget {
 }

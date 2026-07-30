@@ -1,5 +1,6 @@
 package mtr.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import mtr.client.IDrawing;
 import mtr.data.IGui;
 import mtr.data.Lift;
@@ -10,7 +11,7 @@ import mtr.mappings.UtilitiesClient;
 import mtr.packet.IPacket;
 import mtr.packet.PacketTrainDataGuiClient;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 
@@ -227,44 +228,44 @@ public class LiftCustomizationScreen extends ScreenMapper implements IGui, IPack
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+	public void render(PoseStack matrices, int mouseX, int mouseY, float delta) {
 		try {
-			guiGraphics.fill(0, 0, totalWidth, height, BACKGROUND_COLOR);
-			super.render(guiGraphics, mouseX, mouseY, delta);
+			Gui.fill(matrices, 0, 0, totalWidth, height, BACKGROUND_COLOR);
+			super.render(matrices, mouseX, mouseY, delta);
 
 			int row = 0;
-			guiGraphics.drawCenteredString(font, Text.translatable("tooltip.mtr.rail_action_height", lift.liftHeight / 2F),
+			drawCenteredString(matrices, font, Text.translatable("tooltip.mtr.rail_action_height", lift.liftHeight / 2F),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 			row++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("tooltip.mtr.rail_action_width", lift.liftWidth),
+			drawCenteredString(matrices, font, Text.translatable("tooltip.mtr.rail_action_width", lift.liftWidth),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 			row++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("tooltip.mtr.rail_action_depth", lift.liftDepth),
+			drawCenteredString(matrices, font, Text.translatable("tooltip.mtr.rail_action_depth", lift.liftDepth),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 			row++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.offset_x", lift.liftOffsetX / 2F),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.offset_x", lift.liftOffsetX / 2F),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 			row++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.offset_y", lift.liftOffsetY),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.offset_y", lift.liftOffsetY),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 			row++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.offset_z", lift.liftOffsetZ / 2F),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.offset_z", lift.liftOffsetZ / 2F),
 					leftColumnX + columnWidth / 2, SQUARE_SIZE * row + TEXT_PADDING, ARGB_WHITE);
 
 			int rightRow = 0;
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.lift_acceleration", String.format("%.3f", lift.acceleration)),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.lift_acceleration", String.format("%.3f", lift.acceleration)),
 					rightColumnX + columnWidth / 2, SQUARE_SIZE * rightRow + TEXT_PADDING, ARGB_WHITE);
 			rightRow++;
 
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.lift_max_speed", String.format("%.2f", lift.maxSpeed)),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.lift_max_speed", String.format("%.2f", lift.maxSpeed)),
 					rightColumnX + columnWidth / 2, SQUARE_SIZE * rightRow + TEXT_PADDING, ARGB_WHITE);
 			rightRow++;
-			guiGraphics.drawCenteredString(font, Text.translatable("gui.mtr.lift_display_color", Text.translatable("gui.mtr.lift_display_color_" + lift.displayColor.name().toLowerCase(Locale.ENGLISH))),
+			drawCenteredString(matrices, font, Text.translatable("gui.mtr.lift_display_color", Text.translatable("gui.mtr.lift_display_color_" + lift.displayColor.name().toLowerCase(Locale.ENGLISH))),
 					rightColumnX + columnWidth / 2, SQUARE_SIZE * rightRow + TEXT_PADDING, ARGB_WHITE);
 		} catch (Exception e) {
 			e.printStackTrace();

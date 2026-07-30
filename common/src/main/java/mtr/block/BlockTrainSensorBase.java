@@ -25,15 +25,15 @@ import java.util.Set;
 public abstract class BlockTrainSensorBase extends BlockMapper implements EntityBlockMapper {
 
 	public BlockTrainSensorBase() {
-		super(BlockBehaviour.Properties.copy(Blocks.SMOOTH_STONE));
+		super(Properties.copy(Blocks.SMOOTH_STONE));
 	}
 
 	@Override
 	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand interactionHand, BlockHitResult blockHitResult) {
 		return IBlock.checkHoldingBrush(world, player, () -> {
 			final BlockEntity entity = world.getBlockEntity(pos);
-			if (entity instanceof BlockTrainSensorBase.TileEntityTrainSensorBase) {
-				((BlockTrainSensorBase.TileEntityTrainSensorBase) entity).syncData();
+			if (entity instanceof TileEntityTrainSensorBase) {
+				((TileEntityTrainSensorBase) entity).syncData();
 				PacketTrainDataGuiServer.openTrainSensorScreenS2C((ServerPlayer) player, pos);
 			}
 		});

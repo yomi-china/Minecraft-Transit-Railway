@@ -42,7 +42,7 @@ public class BlockLiftPanelEven1 extends BlockLiftPanelBase {
 				final BlockState state = level.getBlockState(getBlockPos());
 				if (IBlock.getStatePropertySafe(state, TEMP)) {
 					final Direction newFacing = IBlock.getStatePropertySafe(state, FACING).getOpposite();
-					final IBlock.EnumSide newSide = IBlock.getStatePropertySafe(state, LEFT) ? EnumSide.LEFT : EnumSide.RIGHT;
+					final EnumSide newSide = IBlock.getStatePropertySafe(state, LEFT) ? EnumSide.LEFT : EnumSide.RIGHT;
 					level.setBlockAndUpdate(getBlockPos(), state.setValue(FACING, newFacing).setValue(SIDE, newSide).setValue(TEMP, false));
 				} else {
 					converted = true;

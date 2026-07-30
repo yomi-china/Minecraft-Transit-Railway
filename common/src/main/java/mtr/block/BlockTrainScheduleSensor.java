@@ -88,7 +88,7 @@ public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 				final Block block = state.getBlock();
 				final boolean isActive = IBlock.getStatePropertySafe(state, POWERED) > 1 && world.getBlockTicks().hasScheduledTick(pos, block);
 
-				if (isActive || !(block instanceof BlockTrainScheduleSensor) || !(blockEntity instanceof BlockTrainScheduleSensor.TileEntityTrainScheduleSensor)) {
+				if (isActive || !(block instanceof BlockTrainScheduleSensor) || !(blockEntity instanceof TileEntityTrainScheduleSensor)) {
 					return;
 				}
 

@@ -5,6 +5,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -12,7 +14,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public abstract class BlockPSDAPGBase extends BlockDirectionalDoubleBlockBase {
 
 	public BlockPSDAPGBase() {
-		super(Properties.of().requiresCorrectToolForDrops().strength(2).noOcclusion());
+		super(Properties.of(Material.METAL, MaterialColor.COLOR_GRAY).requiresCorrectToolForDrops().strength(2).noOcclusion());
 	}
 
 	@Override

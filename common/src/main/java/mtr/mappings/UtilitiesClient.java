@@ -5,7 +5,8 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Axis;
+import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -24,7 +25,6 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
-import org.joml.Matrix4f;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ public interface UtilitiesClient {
 	}
 
 	static int drawInBatch(Font textRenderer, FormattedCharSequence formattedCharSequence, float x, float y, int color, boolean shadow, Matrix4f matrix4f, MultiBufferSource immediate, int overlay, int light) {
-		return textRenderer.drawInBatch(formattedCharSequence, x, y, color, shadow, matrix4f, immediate, Font.DisplayMode.NORMAL, overlay, light);
+		return textRenderer.drawInBatch(formattedCharSequence, x, y, color, shadow, matrix4f, immediate, false, overlay, light);
 	}
 
 	static void setScreen(Minecraft client, ScreenMapper screen) {
@@ -58,7 +58,7 @@ public interface UtilitiesClient {
 	}
 
 	static EntityModel<Boat> getBoatModel() {
-		return new BoatModel(BoatModel.createBodyModel().bakeRoot());
+		return new BoatModel(BoatModel.createBodyModel(false).bakeRoot(), false);
 	}
 
 	static void setPacketCoordinates(Entity entity, double x, double y, double z) {
@@ -86,7 +86,7 @@ public interface UtilitiesClient {
 	}
 
 	static File getResourcePackDirectory(Minecraft minecraft) {
-		return minecraft.getResourcePackDirectory().toFile();
+		return minecraft.getResourcePackDirectory();
 	}
 
 	static Button newButton(Button.OnPress onPress) {
@@ -94,50 +94,50 @@ public interface UtilitiesClient {
 	}
 
 	static Button newButton(Component component, Button.OnPress onPress) {
-		return Button.builder(component, onPress).build();
+		return new Button(0, 0, 0, 20, component, onPress);
 	}
 
 	static Button newButton(int height, Component component, Button.OnPress onPress) {
-		return Button.builder(component, onPress).size(0, height).build();
+		return new Button(0, 0, 0, height, component, onPress);
 	}
 
 	static int getWidgetX(AbstractWidget widget) {
-		return widget.getX();
+		return widget.x;
 	}
 
 	static void setWidgetX(AbstractWidget widget, int x) {
-		widget.setX(x);
+		widget.x = x;
 	}
 
 	static void setWidgetY(AbstractWidget widget, int y) {
-		widget.setY(y);
+		widget.y = y;
 	}
 
 	static int getWidgetY(AbstractWidget widget) {
-		return widget.getY();
+		return widget.y;
 	}
 
 	static void rotateX(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.XP.rotation(angle));
+		matrices.mulPose(Vector3f.XP.rotation(angle));
 	}
 
 	static void rotateXDegrees(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.XP.rotationDegrees(angle));
+		matrices.mulPose(Vector3f.XP.rotationDegrees(angle));
 	}
 
 	static void rotateY(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.YP.rotation(angle));
+		matrices.mulPose(Vector3f.YP.rotation(angle));
 	}
 
 	static void rotateYDegrees(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.YP.rotationDegrees(angle));
+		matrices.mulPose(Vector3f.YP.rotationDegrees(angle));
 	}
 
 	static void rotateZ(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.ZP.rotation(angle));
+		matrices.mulPose(Vector3f.ZP.rotation(angle));
 	}
 
 	static void rotateZDegrees(PoseStack matrices, float angle) {
-		matrices.mulPose(Axis.ZP.rotationDegrees(angle));
+		matrices.mulPose(Vector3f.ZP.rotationDegrees(angle));
 	}
 }

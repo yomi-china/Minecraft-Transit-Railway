@@ -9,7 +9,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.DefaultedRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,34 +58,34 @@ public interface RegistryUtilities {
 	}
 
 	static SoundEvent createSoundEvent(ResourceLocation resourceLocation) {
-		return SoundEvent.createVariableRangeEvent(resourceLocation);
+		return new SoundEvent(resourceLocation);
 	}
 
 	static Item.Properties createItemProperties(Supplier<CreativeModeTab> creativeModeTab) {
-		return new Item.Properties();
+		return new Item.Properties().tab(creativeModeTab.get());
 	}
 
 	static DefaultedRegistry<Item> registryGetItem() {
-		return BuiltInRegistries.ITEM;
+		return Registry.ITEM;
 	}
 
 	static DefaultedRegistry<Block> registryGetBlock() {
-		return BuiltInRegistries.BLOCK;
+		return Registry.BLOCK;
 	}
 
 	static Registry<BlockEntityType<?>> registryGetBlockEntityType() {
-		return BuiltInRegistries.BLOCK_ENTITY_TYPE;
+		return Registry.BLOCK_ENTITY_TYPE;
 	}
 
 	static DefaultedRegistry<EntityType<?>> registryGetEntityType() {
-		return BuiltInRegistries.ENTITY_TYPE;
+		return Registry.ENTITY_TYPE;
 	}
 
 	static Registry<SoundEvent> registryGetSoundEvent() {
-		return BuiltInRegistries.SOUND_EVENT;
+		return Registry.SOUND_EVENT;
 	}
 
 	static Registry<ParticleType<?>> registryGetParticleType() {
-		return BuiltInRegistries.PARTICLE_TYPE;
+		return Registry.PARTICLE_TYPE;
 	}
 }

@@ -10,9 +10,13 @@ import mtr.mappings.Text;
 import mtr.mappings.UtilitiesClient;
 import mtr.packet.PacketTrainDataGuiClient;
 import net.minecraft.Util;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
+
+// 1.19.2 所需导入
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +66,7 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 	private static final int HEADER_H = 40;
 	private static final int PAD = 14;
 	private static final int EXIT_PANELS_START = 96;
-	private static final int RIGHT_PADDING = 10; // 右侧滚动留白
+	private static final int RIGHT_PADDING = 10;
 
 	public EditStationScreen(Station station, DashboardScreen dashboardScreen) {
 		super(station, dashboardScreen, "gui.mtr.station_name", "gui.mtr.station_color");
@@ -85,12 +89,10 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 		setPositionsAndInit(0, width / 2, width / 4 * 3);
 
 		final int yFields = HEADER_H + 20;
-		textFieldName.setY(yFields);
-		colorSelector.setY(yFields);
+		IDrawing.setPositionAndWidth(textFieldName, 0 + TEXT_FIELD_PADDING / 2, yFields, width / 2 - TEXT_FIELD_PADDING);
+		IDrawing.setPositionAndWidth(colorSelector, width / 2 + TEXT_FIELD_PADDING / 2, yFields, width / 4 - TEXT_FIELD_PADDING);
 
-		final int zoneX = width / 4 * 3 + TEXT_FIELD_PADDING / 2;
-		final int zoneW = width / 4 - TEXT_FIELD_PADDING;
-		IDrawing.setPositionAndWidth(textFieldZone, zoneX, yFields, zoneW);
+		IDrawing.setPositionAndWidth(textFieldZone, width / 4 * 3 + TEXT_FIELD_PADDING / 2, yFields, width / 4 - TEXT_FIELD_PADDING);
 
 		final int yExitText = height - SQUARE_SIZE * 2 - TEXT_FIELD_PADDING / 2;
 		IDrawing.setPositionAndWidth(textFieldExitParentLetter, TEXT_FIELD_PADDING / 2, yExitText, width / 4 - TEXT_FIELD_PADDING);
@@ -156,8 +158,9 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-		guiGraphics.fill(0, 0, width, height, 0xE6101010);
+	public void render(PoseStack poseStack, int mouseX, int mouseY, float delta) {
+		fill(poseStack, 0, 0, width, height, 0xE6101010);
+
 		final int currentColor = colorSelector.getColor();
 		final float elapsed = (Util.getMillis() - startTime) / 1000f;
 		final float animT = Math.min(1, elapsed / 0.3f);
@@ -198,7 +201,8 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 
 			float xOff = maxTopWidth + routeScrollVisual;
 
-			guiGraphics.enableScissor(maxTopWidth, 0, width, HEADER_H);
+			int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+			RenderSystem.enableScissor(maxTopWidth, screenHeight - HEADER_H, width, HEADER_H);
 
 			for (int i = 0; i < stationRoutes.size(); i++) {
 				final Route route = stationRoutes.get(i);
@@ -208,8 +212,8 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 				final int txtColor = light ? ARGB_BLACK : ARGB_WHITE;
 				final int fillColor = (bgColor & 0x00FFFFFF) | 0xD0000000;
 
-                final int rectBottom = HEADER_H - ROUTE_RECT_PAD_Y;
-				guiGraphics.fill((int) xOff, ROUTE_RECT_PAD_Y, (int) (xOff + rectW), rectBottom, fillColor);
+				final int rectBottom = HEADER_H - ROUTE_RECT_PAD_Y;
+				fill(poseStack, (int) xOff, ROUTE_RECT_PAD_Y, (int) (xOff + rectW), rectBottom, fillColor);
 
 				final List<String> lines = routeNames.get(i);
 				final int totalTextH = lines.size() * ROUTE_LINE_HEIGHT;
@@ -220,51 +224,56 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 					final int textX = (int) (xOff + (rectW - textW) / 2);
 					if (li > 0) {
 						final float scale = 0.75f;
-						guiGraphics.pose().pushPose();
-						guiGraphics.pose().translate(textX, lineY, 0);
-						guiGraphics.pose().scale(scale, scale, 1);
-						guiGraphics.drawString(font, text, 0, 0, txtColor);
-						guiGraphics.pose().popPose();
+						poseStack.pushPose();
+						poseStack.translate(textX, lineY, 0);
+						poseStack.scale(scale, scale, 1);
+						font.drawShadow(poseStack, text, 0, 0, txtColor);
+						poseStack.popPose();
 						lineY += (int) (ROUTE_LINE_HEIGHT * scale);
 					} else {
-						guiGraphics.drawString(font, text, textX, lineY, txtColor);
+						font.drawShadow(poseStack, text, textX, lineY, txtColor);
 						lineY += ROUTE_LINE_HEIGHT;
 					}
 				}
 				xOff += rectW + ROUTE_RECT_GAP;
 			}
 
-			guiGraphics.disableScissor();
+			RenderSystem.disableScissor();
 		}
 
 		if (currentTopWidth > 0) {
 			final int solidColor = currentColor | 0xFF000000;
-			guiGraphics.fill(0, 0, currentTopWidth, HEADER_H, solidColor);
+			fill(poseStack, 0, 0, currentTopWidth, HEADER_H, solidColor);
 		}
 
 		final int textColor = isColorLight(currentColor) ? 0xFF000000 : 0xFFFFFFFF;
-		guiGraphics.drawString(font, Text.translatable("gui.mtr.station_name"), PAD, 6,
+		font.drawShadow(poseStack, Text.translatable("gui.mtr.station_name"), PAD, 6,
 				(textColor & 0x00FFFFFF) | 0x80000000);
-		guiGraphics.drawString(font, data.name, PAD, 22, textColor);
+		font.drawShadow(poseStack, data.name, PAD, 22, textColor);
 
 		final int labelY = HEADER_H + 6;
-		guiGraphics.drawCenteredString(font, nameText, (width / 2) / 2, labelY, 0xFFAAAAAA);
-		guiGraphics.drawCenteredString(font, colorText, (width / 2 + width / 4 * 3) / 2, labelY, 0xFFAAAAAA);
-		guiGraphics.drawCenteredString(font, stationZoneText, width / 8 * 7, labelY, 0xFFAAAAAA);
-		guiGraphics.vLine(width / 2, EXIT_PANELS_START, height, ARGB_WHITE_TRANSLUCENT);
-		exitParentList.render(guiGraphics, font);
-		exitDestinationList.render(guiGraphics, font);
-		guiGraphics.drawCenteredString(font, exitParentsText, width / 4,
+		GuiComponent.drawCenteredString(poseStack, font, nameText, (width / 2) / 2, labelY, 0xFFAAAAAA);
+		GuiComponent.drawCenteredString(poseStack, font, colorText, (width / 2 + width / 4 * 3) / 2, labelY, 0xFFAAAAAA);
+		GuiComponent.drawCenteredString(poseStack, font, stationZoneText, width / 8 * 7, labelY, 0xFFAAAAAA);
+
+		fill(poseStack, width / 2, EXIT_PANELS_START, width / 2 + 1, height, ARGB_WHITE_TRANSLUCENT);
+
+		exitParentList.render(poseStack, font);
+		exitDestinationList.render(poseStack, font);
+
+		GuiComponent.drawCenteredString(poseStack, font, exitParentsText, width / 4,
 				EXIT_PANELS_START - SQUARE_SIZE + TEXT_PADDING, ARGB_WHITE);
 		if (parentExists()) {
-			guiGraphics.drawCenteredString(font, exitDestinationsText, 3 * width / 4,
+			GuiComponent.drawCenteredString(poseStack, font, exitDestinationsText, 3 * width / 4,
 					EXIT_PANELS_START - SQUARE_SIZE + TEXT_PADDING, ARGB_WHITE);
 		}
-		super.render(guiGraphics, mouseX, mouseY, delta);
+
+		super.render(poseStack, mouseX, mouseY, delta);
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics guiGraphics) {
+	public void renderBackground(PoseStack poseStack) {
+
 	}
 
 	@Override

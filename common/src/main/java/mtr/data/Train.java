@@ -9,7 +9,7 @@ import mtr.packet.IPacket;
 import mtr.path.PathData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.FriendlyByteBuf;
@@ -999,8 +999,8 @@ public abstract class Train extends NameColorDataBase implements IPacket {
 		if (onboardToolItem == null && !onboardToolChecked) {
 			onboardToolChecked = true;
 			final ResourceLocation id = new ResourceLocation("mtryum", "onboard_tool");
-			if (BuiltInRegistries.ITEM.containsKey(id)) {
-				onboardToolItem = BuiltInRegistries.ITEM.get(id);
+			if (Registry.ITEM.containsKey(id)) {
+				onboardToolItem = Registry.ITEM.get(id);
 			}
 		}
 		return onboardToolItem != null && player.isHolding(onboardToolItem);

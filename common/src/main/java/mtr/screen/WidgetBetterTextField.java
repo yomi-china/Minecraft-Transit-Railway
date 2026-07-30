@@ -43,12 +43,23 @@ public class WidgetBetterTextField extends EditBox implements IGui {
 	@Override
 	public void setResponder(Consumer<String> changedListener) {
 		super.setResponder(text -> {
-			final String newText;
+			String newText;
 			if (filter.isEmpty()) {
 				newText = trySetLength(text);
 			} else {
 				newText = trySetLength(text.toUpperCase(Locale.ENGLISH).replaceAll(filter, ""));
 				if (!newText.equals(text)) {
+					setValue(newText);
+				}
+			}
+			if (filter.equals(TextFieldFilter.POSITIVE_FLOAT.filter)) {
+				if (newText.chars().filter(ch -> ch == '.').count() > 1) {
+					newText = newText.replaceAll("\\.(?=.*\\.)", "");
+				}
+				if (newText.startsWith(".")) {
+					newText = "0" + newText;
+				}
+				if (!newText.equals(getValue())) {
 					setValue(newText);
 				}
 			}
@@ -80,7 +91,7 @@ public class WidgetBetterTextField extends EditBox implements IGui {
 	}
 
 	public enum TextFieldFilter {
-		POSITIVE_INTEGER("\\D"), INTEGER("[^-\\d]"), HEX("[^\\dA-F]"), LETTER("[^A-Z]");
+		POSITIVE_INTEGER("\\D"), INTEGER("[^-\\d]"), HEX("[^\\dA-F]"), LETTER("[^A-Z]"), POSITIVE_FLOAT("[^\\d.]");
 
 		private final String filter;
 

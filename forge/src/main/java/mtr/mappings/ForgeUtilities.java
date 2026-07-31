@@ -1,4 +1,4 @@
-package mtr.forge.mappings;
+package mtr.mappings;
 
 import dev.architectury.event.events.client.ClientTextureStitchEvent;
 import dev.architectury.platform.forge.EventBuses;
@@ -106,15 +106,17 @@ public class ForgeUtilities {
 	}
 
 	public static class Events {
+
 		@SubscribeEvent
 		public static void onRenderTickEvent(RenderLevelStageEvent event) {
-			if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)
-				ForgeUtilities.renderTickAction.run();
+			if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) {
+				renderTickAction.run();
+			}
 		}
 
 		@SubscribeEvent
 		public static void onRenderGameOverlayEvent(RenderGuiOverlayEvent.Post event) {
-			ForgeUtilities.renderGameOverlayAction.accept(event.getPoseStack());
+			renderGameOverlayAction.accept(event.getPoseStack());
 		}
 	}
 

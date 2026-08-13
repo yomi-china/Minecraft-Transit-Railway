@@ -107,7 +107,9 @@ public class RenderDrivingOverlay implements IGui {
 		final float doorValue = trainClient.getDoorValue();
 		final int manualNotch = trainClient.getManualNotch();
 		final boolean isManual = trainClient.isCurrentlyManual();
-		final int maxSpeedKmh = trainClient.getMaxManualSpeedKmh();
+
+		final int rawMaxSpeedKmh = trainClient.getMaxManualSpeedKmh();
+		final int maxSpeedKmh = rawMaxSpeedKmh > 0 ? rawMaxSpeedKmh : 120;
 
 		RenderSystem.enableBlend();
 		final Tesselator tesselator = Tesselator.getInstance();

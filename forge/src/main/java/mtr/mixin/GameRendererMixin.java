@@ -1,4 +1,4 @@
-package mtr.forge.mixin;
+package mtr.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import mtr.screen.ResourcePackCreatorScreen;

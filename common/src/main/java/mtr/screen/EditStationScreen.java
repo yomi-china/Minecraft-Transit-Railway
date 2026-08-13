@@ -12,8 +12,6 @@ import mtr.packet.PacketTrainDataGuiClient;
 import net.minecraft.Util;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-
-// 1.19.2 所需导入
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiComponent;
@@ -201,8 +199,14 @@ public class EditStationScreen extends EditNameColorScreenBase<Station> {
 
 			float xOff = maxTopWidth + routeScrollVisual;
 
-			int screenHeight = minecraft.getWindow().getGuiScaledHeight();
-			RenderSystem.enableScissor(maxTopWidth, screenHeight - HEADER_H, width, HEADER_H);
+			final double guiScale = minecraft.getWindow().getGuiScale();
+			final int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+			RenderSystem.enableScissor(
+					(int) (maxTopWidth * guiScale),
+					(int) ((screenHeight - HEADER_H) * guiScale),
+					(int) (width * guiScale),
+					(int) (HEADER_H * guiScale)
+			);
 
 			for (int i = 0; i < stationRoutes.size(); i++) {
 				final Route route = stationRoutes.get(i);

@@ -9,6 +9,11 @@ import mtr.block.BlockNode;
 import mtr.mappings.PersistentStateMapper;
 import mtr.mappings.Utilities;
 import mtr.packet.*;
+import mtr.packet.IPacket;
+import mtr.packet.PacketTrainDataGuiServer;
+import mtr.packet.UpdateBlueMap;
+import mtr.packet.UpdateDynmap;
+import mtr.packet.UpdateSquaremap;
 import mtr.path.PathData;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -35,6 +40,18 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class RailwayData extends PersistentStateMapper implements IPacket {
@@ -67,6 +84,7 @@ public class RailwayData extends PersistentStateMapper implements IPacket {
 	private final List<Map<UUID, Long>> trainPositions = new ArrayList<>(2);
 	private final Map<Player, BlockPos> playerLastUpdatedPositions = new HashMap<>();
 	private final List<Player> playersToSyncSchedules = new ArrayList<>();
+	private long railsPacketIdCounter;
 	private final UpdateNearbyMovingObjects<TrainServer> updateNearbyTrains;
 	private final UpdateNearbyMovingObjects<LiftServer> updateNearbyLifts;
 	private final Map<Long, List<ScheduleEntry>> schedulesForPlatform = new HashMap<>();
@@ -499,6 +517,7 @@ public class RailwayData extends PersistentStateMapper implements IPacket {
 			return;
 		}
 
+		final long packetId = ++railsPacketIdCounter;
 		final int MAX_SAFE = Math.min(MAX_PACKET_BYTES - 4096, RAIL_CHUNK_SIZE);
 		final List<Map.Entry<BlockPos, Map<BlockPos, Rail>>> entries = new ArrayList<>(railsToAdd.entrySet());
 		final List<List<Map.Entry<BlockPos, Map<BlockPos, Rail>>>> chunks = new ArrayList<>();
@@ -530,6 +549,9 @@ public class RailwayData extends PersistentStateMapper implements IPacket {
 		for (int c = 0; c < chunks.size(); c++) {
 			final List<Map.Entry<BlockPos, Map<BlockPos, Rail>>> chunk = chunks.get(c);
 			final FriendlyByteBuf packet = new FriendlyByteBuf(Unpooled.buffer());
+			packet.writeLong(packetId);
+			packet.writeInt(chunks.size());
+			packet.writeInt(c);
 			packet.writeInt(chunk.size());
 			for (final Map.Entry<BlockPos, Map<BlockPos, Rail>> entry : chunk) {
 				packet.writeBlockPos(entry.getKey());
@@ -586,6 +608,10 @@ public class RailwayData extends PersistentStateMapper implements IPacket {
 	}
 
 	// other
+
+	public Map<BlockPos, Map<BlockPos, Rail>> getRailsMap() {
+		return rails;
+	}
 
 	public static void addRail(Map<BlockPos, Map<BlockPos, Rail>> rails, Set<Platform> platforms, Set<Siding> sidings, TransportMode transportMode, BlockPos posStart, BlockPos posEnd, Rail rail, long savedRailId) {
 		try {
@@ -911,3 +937,4 @@ public class RailwayData extends PersistentStateMapper implements IPacket {
 		void routeAndStationsCallback(int currentStationIndex, Route thisRoute, Route nextRoute, Station thisStation, Station nextStation, Station lastStation);
 	}
 }
+

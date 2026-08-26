@@ -15,7 +15,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.util.Mth;
 import org.apache.commons.lang3.StringUtils;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Locale;
 import java.util.Random;
 import java.util.function.Consumer;

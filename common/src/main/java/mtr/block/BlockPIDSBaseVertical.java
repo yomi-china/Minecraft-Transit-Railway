@@ -42,9 +42,9 @@ public abstract class BlockPIDSBaseVertical extends BlockDirectionalDoubleBlockB
 			final BlockPos finalPos = isUpper ? pos : pos.relative(Direction.Axis.Y, 1);
 			final BlockEntity entity1 = world.getBlockEntity(finalPos);
 
-			if (entity1 instanceof TileEntityBlockPIDSBaseVertical) {
-				((TileEntityBlockPIDSBaseVertical) entity1).syncData();
-				PacketTrainDataGuiServer.openPIDSConfigScreenS2C((ServerPlayer) player, finalPos, finalPos, ((TileEntityBlockPIDSBaseVertical) entity1).getMaxArrivals(), ((TileEntityBlockPIDSBaseVertical) entity1).getLinesPerArrival());
+			if (entity1 instanceof BlockPIDSBaseVertical.TileEntityBlockPIDSBaseVertical) {
+				((BlockPIDSBaseVertical.TileEntityBlockPIDSBaseVertical) entity1).syncData();
+				PacketTrainDataGuiServer.openPIDSConfigScreenS2C((ServerPlayer) player, finalPos, finalPos, ((BlockPIDSBaseVertical.TileEntityBlockPIDSBaseVertical) entity1).getMaxArrivals(), ((BlockPIDSBaseVertical.TileEntityBlockPIDSBaseVertical) entity1).getLinesPerArrival());
 			}
 		});
 	}

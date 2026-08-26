@@ -4,7 +4,14 @@ import mtr.data.AreaBase;
 import mtr.data.IGui;
 import mtr.data.RailwayData;
 import net.minecraft.world.level.Level;
-import xyz.jpenilla.squaremap.api.*;
+import xyz.jpenilla.squaremap.api.Key;
+import xyz.jpenilla.squaremap.api.LayerProvider;
+import xyz.jpenilla.squaremap.api.MapWorld;
+import xyz.jpenilla.squaremap.api.Point;
+import xyz.jpenilla.squaremap.api.Registry;
+import xyz.jpenilla.squaremap.api.SimpleLayerProvider;
+import xyz.jpenilla.squaremap.api.SquaremapProvider;
+import xyz.jpenilla.squaremap.api.WorldIdentifier;
 import xyz.jpenilla.squaremap.api.marker.Marker;
 import xyz.jpenilla.squaremap.api.marker.MarkerOptions;
 

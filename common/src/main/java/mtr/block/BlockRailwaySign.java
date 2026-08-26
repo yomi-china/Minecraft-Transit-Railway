@@ -1,7 +1,11 @@
 package mtr.block;
 
 import mtr.BlockEntityTypes;
-import mtr.mappings.*;
+import mtr.mappings.BlockDirectionalMapper;
+import mtr.mappings.BlockEntityClientSerializableMapper;
+import mtr.mappings.BlockEntityMapper;
+import mtr.mappings.EntityBlockMapper;
+import mtr.mappings.Text;
 import mtr.packet.PacketTrainDataGuiServer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -34,7 +38,11 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class BlockRailwaySign extends BlockDirectionalMapper implements EntityBlockMapper, IBlock {
 

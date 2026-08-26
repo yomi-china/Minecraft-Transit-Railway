@@ -345,32 +345,25 @@ public class Siding extends SavedRailBase implements IPacket, IReducedSaveData {
 			if (railwayData != null) {
 				DataCache dataCache = railwayData.dataCache;
 
-				final Map<Long, Route.RoutePlatform> routePlatformMap = new HashMap<>();
-				if (depot != null) {
-					for (final long routeId : depot.routeIds) {
-						final Route route = dataCache.routeIdMap.get(routeId);
-						if (route != null) {
-							for (final Route.RoutePlatform rp : route.platformIds) {
-								routePlatformMap.put(rp.platformId, rp);
-							}
-						}
-					}
-				}
-
 				for (PathData pd : tempPath) {
 					if (pd.savedRailBaseId != 0 && pd.dwellTime > 0) {
-						Platform platform = dataCache.platformIdMap.get(pd.savedRailBaseId);
+						final Platform platform = dataCache.platformIdMap.get(pd.savedRailBaseId);
 						if (platform != null) {
 							pd.adcTime = platform.getAdcTime();
-							final Route.RoutePlatform rp = routePlatformMap.get(pd.savedRailBaseId);
-							if (rp != null) {
-								pd.stopWithoutOpeningDoors = rp.stopWithoutOpeningDoors;
-								if (rp.customDwellTime) {
-									pd.dwellTime = rp.dwellTime;
-								}
-								if (rp.customAdcTime) {
-									pd.adcTime = rp.adcTime;
-								}
+							if (depot != null) {
+								final int stopIndex = pd.stopIndex - 1;
+								RailwayData.useRoutesAndStationsFromIndex(stopIndex, depot.routeIds, dataCache, (currentStationIndex, thisRoute, nextRoute, thisStation, nextStation, lastStation) -> {
+									if (thisRoute != null && currentStationIndex >= 0 && currentStationIndex < thisRoute.platformIds.size()) {
+										final Route.RoutePlatform rp = thisRoute.platformIds.get(currentStationIndex);
+										pd.stopWithoutOpeningDoors = rp.stopWithoutOpeningDoors;
+										if (rp.customDwellTime) {
+											pd.dwellTime = rp.dwellTime;
+										}
+										if (rp.customAdcTime) {
+											pd.adcTime = rp.adcTime;
+										}
+									}
+								});
 							}
 						}
 					}

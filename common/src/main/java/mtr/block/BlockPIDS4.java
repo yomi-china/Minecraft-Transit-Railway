@@ -21,7 +21,7 @@ public class BlockPIDS4 extends BlockPIDSBaseVertical {
         return new TileEntityBlockPIDS4(pos, state);
     }
 
-    public static class TileEntityBlockPIDS4 extends TileEntityBlockPIDSBaseVertical {
+    public static class TileEntityBlockPIDS4 extends BlockPIDSBaseVertical.TileEntityBlockPIDSBaseVertical {
 
         public static final int MAX_ARRIVALS = 8;
         public static final int LINES_PER_ARRIVAL = 2;

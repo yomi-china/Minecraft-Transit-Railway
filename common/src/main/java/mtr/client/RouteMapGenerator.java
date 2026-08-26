@@ -4,7 +4,11 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import mtr.MTR;
-import mtr.data.*;
+import mtr.data.IGui;
+import mtr.data.Platform;
+import mtr.data.RailwayData;
+import mtr.data.Route;
+import mtr.data.Station;
 import mtr.mappings.Utilities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
@@ -13,7 +17,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public class RouteMapGenerator implements IGui {
@@ -355,10 +365,11 @@ public class RouteMapGenerator implements IGui {
 			getRouteStream(platformId, (route, currentStationIndex) -> routeDetails.add(new Tuple<>(route, currentStationIndex)));
 			final int routeCount = routeDetails.size();
 
-			for (final Tuple<Route, Integer> tuple : routeDetails) {
-				final Route route = tuple.getA();
-				if (route.platformIds.size() >= 3 && route.circularState != Route.CircularState.NONE) {
-					return generateCircularRouteMap(route, tuple.getB(), aspectRatio, transparentWhite);
+			final List<Route> circularRouteCandidates = new ArrayList<>(ClientData.ROUTES);
+			circularRouteCandidates.sort((a, b) -> a.color == b.color ? a.compareTo(b) : a.color - b.color);
+			for (final Route route : circularRouteCandidates) {
+				if (route.containsPlatformId(platformId) && !route.isHidden && route.platformIds.size() >= 3 && route.circularState != Route.CircularState.NONE) {
+					return generateCircularRouteMap(route, route.getPlatformIdIndex(platformId), vertical, flip, aspectRatio, transparentWhite);
 				}
 			}
 
@@ -534,39 +545,77 @@ public class RouteMapGenerator implements IGui {
 		return null;
 	}
 
-	private static NativeImage generateCircularRouteMap(Route route, int currentStationIndex, float aspectRatio, boolean transparentWhite) {
+	private static NativeImage generateCircularRouteMap(Route route, int currentStationIndex, boolean vertical, boolean flip, float aspectRatio, boolean transparentWhite) {
 		if (aspectRatio <= 0 || scale <= 0) {
 			return null;
 		}
 
-		final int thickness = lineSize;
-		final int radius = thickness * 3;
-		final int capsuleHeight = 2 * radius + thickness;
+		final int thickness = vertical ? lineSize * 3 / 2 : lineSize;
+		final int radius = thickness * (vertical ? 8 : 3);
 		final int textMargin = scale * 3 / 4;
-		final int totalImageHeight = capsuleHeight + 2 * textMargin;
-		final int totalImageWidth = Math.max(totalImageHeight, Math.round(totalImageHeight * aspectRatio));
-
-		final NativeImage image = new NativeImage(NativeImage.Format.RGBA, totalImageWidth, totalImageHeight, false);
-		image.fillRect(0, 0, totalImageWidth, totalImageHeight, ARGB_WHITE);
-
 		final int color = ARGB_BLACK | route.color;
-		final int centerX = totalImageWidth / 2;
-		final int centerY = textMargin + capsuleHeight / 2;
-		final int horizontalMargin = textMargin;
-		final int straightLength = Math.max(0, totalImageWidth - 2 * horizontalMargin - 2 * radius);
+		final List<Route.RoutePlatform> platforms = route.platformIds;
+		final int totalPlatforms = platforms.size();
+		if (totalPlatforms == 0) {
+			return null;
+		}
+
+		final boolean duplicateEnd = totalPlatforms > 1 && getStationId(platforms.get(0).platformId) == getStationId(platforms.get(totalPlatforms - 1).platformId);
+		final int renderPlatformCount = duplicateEnd ? totalPlatforms - 1 : totalPlatforms;
+		final int normalizedCurrentStationIndex = Math.floorMod(currentStationIndex, renderPlatformCount);
+		final boolean reverse = flip ^ route.circularState == Route.CircularState.ANTICLOCKWISE;
+
+		final int straightLength;
+		final int centerX;
+		final int centerY;
+		final int imageWidth;
+		final int imageHeight;
+		final int maxTextWidth;
+		if (vertical) {
+			final int capsuleWidth = 2 * radius + thickness;
+			imageWidth = Math.max(scale * 12, capsuleWidth + 2 * textMargin);
+			imageHeight = Math.round(imageWidth * aspectRatio);
+			straightLength = Math.max(0, imageHeight - 2 * textMargin - capsuleWidth);
+			centerX = imageWidth / 2;
+			centerY = imageHeight / 2;
+			maxTextWidth = Math.max(1, (imageWidth - capsuleWidth) / 2 - thickness);
+		} else {
+			final int capsuleHeight = 2 * radius + thickness;
+			imageHeight = capsuleHeight + 2 * textMargin;
+			imageWidth = Math.max(imageHeight, Math.round(imageHeight * aspectRatio));
+			straightLength = Math.max(0, imageWidth - 2 * textMargin - 2 * radius);
+			centerX = imageWidth / 2;
+			centerY = textMargin + capsuleHeight / 2;
+			maxTextWidth = Math.max(1, (imageWidth - 2 * textMargin) / 2);
+		}
+
+		final NativeImage image = new NativeImage(NativeImage.Format.RGBA, imageWidth, imageHeight, false);
+		image.fillRect(0, 0, imageWidth, imageHeight, ARGB_WHITE);
+
 		final int capsuleLeftX = centerX - straightLength / 2 - radius;
 		final int capsuleRightX = centerX + straightLength / 2 + radius;
-
-		drawSemiCircle(image, capsuleLeftX + radius, centerY, radius, thickness, true, color);
-		drawSemiCircle(image, capsuleRightX - radius, centerY, radius, thickness, false, color);
-		if (straightLength > 0) {
-			final int topY1 = centerY - radius - thickness / 2;
-			final int topY2 = centerY - radius + thickness / 2 - 1;
-			drawRect(image, capsuleLeftX + radius, topY1, capsuleRightX - radius - 1, topY2, color);
-
-			final int bottomY1 = centerY + radius - thickness / 2;
-			final int bottomY2 = centerY + radius + thickness / 2 - 1;
-			drawRect(image, capsuleLeftX + radius, bottomY1, capsuleRightX - radius - 1, bottomY2, color);
+		final int capsuleTopY = centerY - straightLength / 2;
+		final int capsuleBottomY = centerY + straightLength / 2;
+		if (vertical) {
+			final int lineLeftX = centerX - radius;
+			final int lineRightX = centerX + radius;
+			drawVerticalSemiCircle(image, centerX, capsuleTopY, radius, thickness, true, color);
+			drawVerticalSemiCircle(image, centerX, capsuleBottomY, radius, thickness, false, color);
+			if (straightLength > 0) {
+				drawRect(image, lineLeftX - thickness / 2, capsuleTopY, lineLeftX + thickness / 2 - 1, capsuleBottomY, color);
+				drawRect(image, lineRightX - thickness / 2, capsuleTopY, lineRightX + thickness / 2 - 1, capsuleBottomY, color);
+			}
+		} else {
+			drawSemiCircle(image, capsuleLeftX + radius, centerY, radius, thickness, true, color);
+			drawSemiCircle(image, capsuleRightX - radius, centerY, radius, thickness, false, color);
+			if (straightLength > 0) {
+				final int topY1 = centerY - radius - thickness / 2;
+				final int topY2 = centerY - radius + thickness / 2 - 1;
+				drawRect(image, capsuleLeftX + radius, topY1, capsuleRightX - radius - 1, topY2, color);
+				final int bottomY1 = centerY + radius - thickness / 2;
+				final int bottomY2 = centerY + radius + thickness / 2 - 1;
+				drawRect(image, capsuleLeftX + radius, bottomY1, capsuleRightX - radius - 1, bottomY2, color);
+			}
 		}
 
 		final Set<Integer> currentRouteColors = new HashSet<>();
@@ -575,35 +624,37 @@ public class RouteMapGenerator implements IGui {
 		currentRouteNames.add(route.name.split("\\|\\|")[0]);
 
 		final double perimeter = 2 * Math.PI * radius + 2 * straightLength;
-		final List<Route.RoutePlatform> platforms = route.platformIds;
-		final int totalPlatforms = platforms.size();
-		if (totalPlatforms == 0) {
-			if (transparentWhite) clearColor(image, ARGB_WHITE);
-			return image;
-		}
-
-		final double stepLength = perimeter / totalPlatforms;
-		final double startArc = straightLength / 2.0;
+		final double stepLength = perimeter / renderPlatformCount;
+		final double startArc = vertical ? 0 : straightLength / 2.0;
 		final ClientCache clientCache = ClientData.DATA_CACHE;
-		final int maxTextWidth = Math.max(1, (totalImageWidth - 2 * textMargin) / 2);
 
-		for (int i = 0; i < totalPlatforms; i++) {
-			int delta = i - currentStationIndex;
-			if (delta < 0) delta += totalPlatforms;
-			double arc = startArc + delta * stepLength;
-			arc %= perimeter;
-			if (arc < 0) arc += perimeter;
-
-			int[] point = getCapsulePoint(centerX, centerY, radius, straightLength, arc);
-			int px = point[0];
-			int py = point[1];
-
-			boolean isCurrentStation = (delta == 0);
+		for (int i = 0; i < renderPlatformCount; i++) {
+			final int delta = Math.floorMod(i - normalizedCurrentStationIndex, renderPlatformCount);
+			final double arc = startArc + (reverse ? -1 : 1) * delta * stepLength;
+			final int[] point = vertical ? getVerticalCapsulePoint(centerX, centerY, radius, straightLength, arc) : getCapsulePoint(centerX, centerY, radius, straightLength, arc);
+			final int px = point[0];
+			final int py = point[1];
+			final boolean isCurrentStation = delta == 0;
 
 			final long platformId = platforms.get(i).platformId;
 			final long stationId = getStationId(platformId);
 			final Station station = clientCache.stationIdMap.get(stationId);
-			final String stationName = (station == null) ? "" : station.name;
+			final String stationName = station == null ? "" : station.name;
+
+			final boolean topRegion = py <= capsuleTopY + 1;
+			final boolean bottomRegion = py >= capsuleBottomY - 1;
+			final boolean leftRegion = !topRegion && !bottomRegion && px < centerX;
+			final boolean rightRegion = !topRegion && !bottomRegion && !leftRegion;
+
+			final int stationNameMaxWidth;
+			final int stationNameMaxHeight;
+			if (vertical) {
+				stationNameMaxWidth = topRegion || bottomRegion ? Math.min(maxTextWidth, Math.max(16, (int) Math.round(stepLength * 1.1))) : Math.max(16, Math.min(maxTextWidth, (rightRegion ? imageWidth - px : px) - thickness / 2 - 4));
+				stationNameMaxHeight = topRegion || bottomRegion ? Math.max(fontSizeSmall * 5 / 4, (topRegion ? py : imageHeight - py) - thickness / 2 - 4) : Math.max(fontSizeSmall * 5 / 4, (int) Math.round(stepLength * 0.8));
+			} else {
+				stationNameMaxWidth = Math.min(maxTextWidth, Math.max(16, (int) Math.round(stepLength * 0.9)));
+				stationNameMaxHeight = (int) ((fontSizeBig + fontSizeSmall) * ClientCache.LINE_HEIGHT_MULTIPLIER);
+			}
 
 			final Map<Integer, ClientCache.ColorNameTuple> interchangeRoutes = getInterchangeRoutes(stationId);
 			final List<Integer> interchangeColors = new ArrayList<>();
@@ -617,25 +668,33 @@ public class RouteMapGenerator implements IGui {
 				});
 			}
 
-			boolean putBarBelow = false;
-			int lineHeight = 0;
-			int lineWidth = 0;
 			int colorBarX = 0;
 			int colorBarY = 0;
 			boolean hasInterchange = !interchangeColors.isEmpty();
 
 			if (hasInterchange) {
-				putBarBelow = py < centerY;
-				lineHeight = lineSize * 2;
-				lineWidth = (int) Math.ceil((float) lineSize / interchangeColors.size());
-				colorBarX = px - lineWidth * interchangeColors.size() / 2;
-				colorBarY = putBarBelow ? py + lineSize / 2 + 1 : py - lineSize / 2 - lineHeight - 1;
-
-				for (int j = 0; j < interchangeColors.size(); j++) {
-					for (int drawX = 0; drawX < lineWidth; drawX++) {
-						for (int drawY = 0; drawY < lineHeight; drawY++) {
-							drawPixelSafe(image, colorBarX + drawX + lineWidth * j, colorBarY + drawY,
-									ARGB_BLACK | interchangeColors.get(j));
+				final int lineHeight = lineSize * 2;
+				final int lineWidth = (int) Math.ceil((float) lineSize / interchangeColors.size());
+				final int halfLine = vertical ? thickness / 2 : lineSize / 2;
+				if (!vertical || topRegion || bottomRegion) {
+					final boolean putBarBelow = !vertical ? py < centerY : topRegion;
+					colorBarX = px - lineWidth * interchangeColors.size() / 2;
+					colorBarY = putBarBelow ? py + halfLine + 1 : py - halfLine - lineHeight - 1;
+					for (int j = 0; j < interchangeColors.size(); j++) {
+						for (int drawX = 0; drawX < lineWidth; drawX++) {
+							for (int drawY = 0; drawY < lineHeight; drawY++) {
+								drawPixelSafe(image, colorBarX + drawX + lineWidth * j, colorBarY + drawY, ARGB_BLACK | interchangeColors.get(j));
+							}
+						}
+					}
+				} else {
+					colorBarX = rightRegion ? px - halfLine - lineHeight - 1 : px + halfLine + 1;
+					colorBarY = py - lineWidth * interchangeColors.size() / 2;
+					for (int j = 0; j < interchangeColors.size(); j++) {
+						for (int drawX = 0; drawX < lineHeight; drawX++) {
+							for (int drawY = 0; drawY < lineWidth; drawY++) {
+								drawPixelSafe(image, colorBarX + drawX, colorBarY + drawY + lineWidth * j, ARGB_BLACK | interchangeColors.get(j));
+							}
 						}
 					}
 				}
@@ -649,20 +708,28 @@ public class RouteMapGenerator implements IGui {
 			if (hasInterchange && !interchangeNames.isEmpty()) {
 				final String interchangeNamesStr = IGui.mergeStations(interchangeNames);
 				final int[] dimensions = new int[2];
+				final int interchangeMaxWidth = vertical && !topRegion && !bottomRegion ? Math.max(1, maxTextWidth - lineSize * 2) : Math.max(16, Math.min(maxTextWidth - lineSize * 2, (int) Math.round(stepLength * 1.1)));
 				final byte[] pixels = clientCache.getTextPixels(interchangeNamesStr, dimensions,
-						maxTextWidth - lineHeight, (int) ((fontSizeSmall * 3 / 2) * ClientCache.LINE_HEIGHT_MULTIPLIER),
-						fontSizeSmall * 3 / 4, fontSizeSmall * 3 / 4, 0,
+						interchangeMaxWidth, (int) ((fontSizeSmall * 3 / 2) * ClientCache.LINE_HEIGHT_MULTIPLIER),
+						vertical ? fontSizeSmall * 15 / 16 : fontSizeSmall * 3 / 4,
+						vertical ? fontSizeSmall * 15 / 16 : fontSizeSmall * 3 / 4, 0,
 						HorizontalAlignment.CENTER);
 				if (pixels != null && dimensions[0] > 0 && dimensions[1] > 0) {
 					int textX = px;
 					int textY;
 					VerticalAlignment verticalAlignment;
-					if (putBarBelow) {
-						textY = colorBarY + lineHeight + dimensions[1] / 2 + 2;
-						verticalAlignment = VerticalAlignment.TOP;
+					if (!vertical || topRegion || bottomRegion) {
+						final boolean putBarBelow = !vertical ? py < centerY : topRegion;
+						textY = putBarBelow ? colorBarY + lineSize * 2 + dimensions[1] / 2 + 2 : colorBarY - dimensions[1] / 2 - 2;
+						verticalAlignment = putBarBelow ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM;
+					} else if (rightRegion) {
+						textX = colorBarX - dimensions[0] / 2 - 2;
+						textY = py;
+						verticalAlignment = VerticalAlignment.CENTER;
 					} else {
-						textY = colorBarY - dimensions[1] / 2 - 2;
-						verticalAlignment = VerticalAlignment.BOTTOM;
+						textX = colorBarX + lineSize * 2 + dimensions[0] / 2 + 2;
+						textY = py;
+						verticalAlignment = VerticalAlignment.CENTER;
 					}
 					drawString(image, pixels, textX, textY, dimensions, HorizontalAlignment.CENTER,
 							verticalAlignment, 0, ARGB_LIGHT_GRAY, false);
@@ -672,29 +739,60 @@ public class RouteMapGenerator implements IGui {
 			if (!stationName.isEmpty()) {
 				final int[] textDimensions = new int[2];
 				final byte[] pixels = clientCache.getTextPixels(stationName, textDimensions,
-						maxTextWidth,
-						(int) ((fontSizeBig + fontSizeSmall) * ClientCache.LINE_HEIGHT_MULTIPLIER),
-						fontSizeBig, fontSizeSmall,
+						stationNameMaxWidth,
+						stationNameMaxHeight,
+						vertical ? fontSizeBig * 5 / 4 : fontSizeBig,
+						vertical ? fontSizeSmall * 5 / 4 : fontSizeSmall,
 						fontSizeSmall / 4,
 						HorizontalAlignment.CENTER);
 				if (pixels != null && textDimensions[0] > 0 && textDimensions[1] > 0) {
-					boolean textBelow = py >= centerY;
 					int textX = px;
-					int baseOffset = isCurrentStation ? lineSize + 2 : lineSize / 2 + 2;
-					int upwardShift = 4;
-					int offsetY = baseOffset - upwardShift;
-					int textY = py + (textBelow ? offsetY : -offsetY);
-					int bgColor = isCurrentStation ? ARGB_BLACK : 0;
-					int textColor = isCurrentStation ? ARGB_WHITE : ARGB_BLACK;
-					drawString(image, pixels, textX, textY, textDimensions, HorizontalAlignment.CENTER,
-							textBelow ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM,
-							bgColor, textColor, false);
+					int textY = py;
+					HorizontalAlignment horizontalAlignment = HorizontalAlignment.CENTER;
+					VerticalAlignment verticalAlignment;
+					if (vertical) {
+						final int textOffset = thickness / 2 + 4;
+						if (topRegion) {
+							textY = py - textOffset;
+							verticalAlignment = VerticalAlignment.BOTTOM;
+						} else if (bottomRegion) {
+							textY = py + textOffset;
+							verticalAlignment = VerticalAlignment.TOP;
+						} else if (leftRegion) {
+							textX = px - textOffset;
+							horizontalAlignment = HorizontalAlignment.RIGHT;
+							verticalAlignment = VerticalAlignment.CENTER;
+						} else {
+							textX = px + textOffset;
+							horizontalAlignment = HorizontalAlignment.LEFT;
+							verticalAlignment = VerticalAlignment.CENTER;
+						}
+					} else {
+						final boolean textBelow = py >= centerY;
+						final int baseOffset = isCurrentStation ? lineSize + 2 : lineSize / 2 + 2;
+						final int offsetY = baseOffset - 4;
+						textY = py + (textBelow ? offsetY : -offsetY);
+						verticalAlignment = textBelow ? VerticalAlignment.TOP : VerticalAlignment.BOTTOM;
+					}
+					drawString(image, pixels, textX, textY, textDimensions, horizontalAlignment,
+							verticalAlignment, isCurrentStation ? ARGB_BLACK : 0, isCurrentStation ? ARGB_WHITE : ARGB_BLACK, false);
 				}
 			}
 		}
 
 		if (transparentWhite) {
 			clearColor(image, ARGB_WHITE);
+		}
+
+		if (vertical) {
+			final NativeImage rotated = new NativeImage(NativeImage.Format.RGBA, imageHeight, imageWidth, false);
+			for (int x = 0; x < imageHeight; x++) {
+				for (int y = 0; y < imageWidth; y++) {
+					rotated.setPixelRGBA(x, y, image.getPixelRGBA(imageWidth - 1 - y, x));
+				}
+			}
+			image.close();
+			return rotated;
 		}
 
 		return image;
@@ -725,6 +823,39 @@ public class RouteMapGenerator implements IGui {
 		return new int[]{x, y};
 	}
 
+	private static int[] getVerticalCapsulePoint(int centerX, int centerY, int r, int straightLength, double arc) {
+		final double perimeter = 2 * Math.PI * r + 2 * straightLength;
+		arc = ((arc % perimeter) + perimeter) % perimeter;
+		final int topY = centerY - straightLength / 2;
+		final int bottomY = centerY + straightLength / 2;
+
+		int x, y;
+		if (arc <= Math.PI * r / 2) {
+			final double angle = arc / r;
+			x = (int) (centerX + r * Math.sin(angle));
+			y = (int) (topY - r * Math.cos(angle));
+		} else if (arc <= Math.PI * r / 2 + straightLength) {
+			x = centerX + r;
+			y = (int) (topY + arc - Math.PI * r / 2);
+		} else {
+			final double arc2 = arc - Math.PI * r / 2 - straightLength;
+			if (arc2 <= Math.PI * r) {
+				final double angle = arc2 / r;
+				x = (int) (centerX + r * Math.cos(angle));
+				y = (int) (bottomY + r * Math.sin(angle));
+			} else if (arc2 <= Math.PI * r + straightLength) {
+				x = centerX - r;
+				y = (int) (bottomY + Math.PI * r - arc2);
+			} else {
+				final double angle = 3 * Math.PI / 2 + (arc2 - Math.PI * r - straightLength) / r;
+				x = (int) (centerX + r * Math.sin(angle));
+				y = (int) (topY - r * Math.cos(angle));
+			}
+		}
+
+		return new int[]{x, y};
+	}
+
 	private static void drawSemiCircle(NativeImage image, int centerX, int centerY, int radius, int thickness, boolean leftSide, int color) {
 		final int outerRadius = radius + thickness / 2;
 		final int innerRadius = Math.max(0, radius - thickness / 2);
@@ -734,6 +865,28 @@ public class RouteMapGenerator implements IGui {
 		final int maxX = Math.min(image.getWidth() - 1, leftSide ? centerX : centerX + outerRadius);
 		final int minY = Math.max(0, centerY - outerRadius);
 		final int maxY = Math.min(image.getHeight() - 1, centerY + outerRadius);
+
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				final int dx = x - centerX;
+				final int dy = y - centerY;
+				final int distSq = dx * dx + dy * dy;
+				if (distSq <= outerSq && distSq >= innerSq) {
+					drawPixelSafe(image, x, y, color);
+				}
+			}
+		}
+	}
+
+	private static void drawVerticalSemiCircle(NativeImage image, int centerX, int centerY, int radius, int thickness, boolean upperSide, int color) {
+		final int outerRadius = radius + thickness / 2;
+		final int innerRadius = Math.max(0, radius - thickness / 2);
+		final int outerSq = outerRadius * outerRadius;
+		final int innerSq = innerRadius * innerRadius;
+		final int minX = Math.max(0, centerX - outerRadius);
+		final int maxX = Math.min(image.getWidth() - 1, centerX + outerRadius);
+		final int minY = Math.max(0, upperSide ? centerY - outerRadius : centerY);
+		final int maxY = Math.min(image.getHeight() - 1, upperSide ? centerY : centerY + outerRadius);
 
 		for (int x = minX; x <= maxX; x++) {
 			for (int y = minY; y <= maxY; y++) {

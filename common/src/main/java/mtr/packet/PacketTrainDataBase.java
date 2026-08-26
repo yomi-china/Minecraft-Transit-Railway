@@ -1,6 +1,10 @@
 package mtr.packet;
 
-import mtr.data.*;
+import mtr.data.EnumHelper;
+import mtr.data.NameColorDataBase;
+import mtr.data.RailwayDataLoggingModule;
+import mtr.data.SerializedDataBase;
+import mtr.data.TransportMode;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.thread.ReentrantBlockableEventLoop;
 

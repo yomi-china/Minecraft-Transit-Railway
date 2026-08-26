@@ -1,12 +1,19 @@
 package mtr.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import mtr.MTRClient;
 import mtr.block.BlockArrivalProjectorBase;
 import mtr.block.IBlock;
 import mtr.client.ClientData;
-import mtr.data.*;
+import mtr.data.IGui;
+import mtr.data.IPIDS;
+import mtr.data.IPIDSRenderChild;
+import mtr.data.PIDSType;
+import mtr.data.Platform;
+import mtr.data.RailwayData;
+import mtr.data.Route;
+import mtr.data.ScheduleEntry;
+import mtr.data.Station;
 import mtr.mappings.BlockEntityMapper;
 import mtr.mappings.BlockEntityRendererMapper;
 import mtr.mappings.Text;
@@ -22,7 +29,13 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static mtr.block.IBlock.HALF;
 

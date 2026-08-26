@@ -1,6 +1,12 @@
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.jonafanho.apitools.*;
+import com.jonafanho.apitools.DependencyType;
+import com.jonafanho.apitools.ModFile;
+import com.jonafanho.apitools.ModId;
+import com.jonafanho.apitools.ModLoader;
+import com.jonafanho.apitools.ModProvider;
+import com.jonafanho.apitools.NetworkUtils;
+import com.jonafanho.apitools.ReleaseStatus;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -20,7 +26,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 

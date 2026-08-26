@@ -5,7 +5,6 @@ import mtr.mappings.BlockEntityMapper;
 import mtr.packet.PacketTrainDataGuiServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,7 +37,6 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 		public void readCompoundTag(CompoundTag compoundTag) {
 			message = compoundTag.getString(KEY_MESSAGE);
 			soundString = compoundTag.getString(KEY_SOUND_STRING);
-			// 向前兼容！~
 			if (soundString.isEmpty()) {
 				soundString = compoundTag.getString("sound_id");
 			}

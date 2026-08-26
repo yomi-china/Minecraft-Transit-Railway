@@ -16,8 +16,18 @@ import net.minecraft.world.phys.Vec3;
 import org.msgpack.core.MessagePacker;
 import org.msgpack.value.Value;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class Rail extends SerializedDataBase {
@@ -26,6 +36,7 @@ public class Rail extends SerializedDataBase {
 	public final TransportMode transportMode;
 	public final RailAngle facingStart;
 	public final RailAngle facingEnd;
+	private final Map<String, String> railData;
 	private final double h1, k1, r1, tStart1, tEnd1;
 	private final double h2, k2, r2, tStart2, tEnd2;
 	private final int yStart, yEnd;
@@ -54,6 +65,7 @@ public class Rail extends SerializedDataBase {
 	private static final String KEY_IS_STRAIGHT_2 = "is_straight_2";
 	private static final String KEY_RAIL_TYPE = "rail_type";
 	private static final String KEY_TRANSPORT_MODE = "transport_mode";
+	private static final String KEY_RAIL_DATA = "rail_data";
 
 	// for curves:
 	// x = h + r*cos(T)
@@ -70,6 +82,7 @@ public class Rail extends SerializedDataBase {
 		this.facingEnd = facingEnd;
 		this.railType = railType;
 		this.transportMode = transportMode;
+		railData = new HashMap<>();
 		yStart = posStart.getY();
 		yEnd = posEnd.getY();
 
@@ -242,6 +255,7 @@ public class Rail extends SerializedDataBase {
 		isStraight2 = messagePackHelper.getBoolean(KEY_IS_STRAIGHT_2);
 		railType = EnumHelper.valueOf(RailType.IRON, messagePackHelper.getString(KEY_RAIL_TYPE));
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, messagePackHelper.getString(KEY_TRANSPORT_MODE));
+		railData = deserializeRailData(messagePackHelper.getString(KEY_RAIL_DATA, ""));
 
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
@@ -267,6 +281,7 @@ public class Rail extends SerializedDataBase {
 		isStraight2 = compoundTag.getBoolean(KEY_IS_STRAIGHT_2);
 		railType = EnumHelper.valueOf(RailType.IRON, compoundTag.getString(KEY_RAIL_TYPE));
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, compoundTag.getString(KEY_TRANSPORT_MODE));
+		railData = deserializeRailData(compoundTag.getString(KEY_RAIL_DATA));
 
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
@@ -291,6 +306,7 @@ public class Rail extends SerializedDataBase {
 		isStraight2 = packet.readBoolean();
 		railType = EnumHelper.valueOf(RailType.IRON, packet.readUtf(PACKET_STRING_READ_LENGTH));
 		transportMode = EnumHelper.valueOf(TransportMode.TRAIN, packet.readUtf(PACKET_STRING_READ_LENGTH));
+		railData = deserializeRailData(packet.readUtf(PACKET_STRING_READ_LENGTH));
 
 		facingStart = getRailAngle(false);
 		facingEnd = getRailAngle(true);
@@ -316,11 +332,12 @@ public class Rail extends SerializedDataBase {
 		messagePacker.packString(KEY_IS_STRAIGHT_2).packBoolean(isStraight2);
 		messagePacker.packString(KEY_RAIL_TYPE).packString(railType.toString());
 		messagePacker.packString(KEY_TRANSPORT_MODE).packString(transportMode.toString());
+		messagePacker.packString(KEY_RAIL_DATA).packString(serializeRailData(railData));
 	}
 
 	@Override
 	public int messagePackLength() {
-		return 18;
+		return 19;
 	}
 
 	@Override
@@ -343,6 +360,49 @@ public class Rail extends SerializedDataBase {
 		packet.writeBoolean(isStraight2);
 		packet.writeUtf(railType.toString());
 		packet.writeUtf(transportMode.toString());
+		packet.writeUtf(serializeRailData(railData));
+	}
+
+	public Map<String, String> getRailData() {
+		return railData;
+	}
+
+	public void setRailData(Map<String, String> railData) {
+		this.railData.clear();
+		this.railData.putAll(railData);
+	}
+
+	private static String serializeRailData(Map<String, String> map) {
+		try {
+			final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+			final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+			dataOutputStream.writeInt(map.size());
+			for (Map.Entry<String, String> entry : map.entrySet()) {
+				dataOutputStream.writeUTF(entry.getKey());
+				dataOutputStream.writeUTF(entry.getValue());
+			}
+			dataOutputStream.flush();
+			return new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			return "";
+		}
+	}
+
+	private static Map<String, String> deserializeRailData(String str) {
+		final Map<String, String> map = new HashMap<>();
+		if (str.isEmpty()) {
+			return map;
+		}
+		try {
+			final DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(str.getBytes(StandardCharsets.UTF_8)));
+			final int size = dataInputStream.readInt();
+			for (int i = 0; i < size; i++) {
+				map.put(dataInputStream.readUTF(), dataInputStream.readUTF());
+			}
+			dataInputStream.close();
+		} catch (IOException ignored) {
+		}
+		return map;
 	}
 
 	public Vec3 getPosition(double rawValue) {

@@ -6,7 +6,12 @@ import mtr.block.BlockRouteSignBase;
 import mtr.client.ClientData;
 import mtr.client.CustomResources;
 import mtr.client.IDrawing;
-import mtr.data.*;
+import mtr.data.DataConverter;
+import mtr.data.IGui;
+import mtr.data.NameColorDataBase;
+import mtr.data.Platform;
+import mtr.data.RailwayData;
+import mtr.data.Station;
 import mtr.mappings.ScreenMapper;
 import mtr.mappings.Text;
 import mtr.mappings.UtilitiesClient;
@@ -23,7 +28,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class RailwaySignScreen extends ScreenMapper implements IGui {

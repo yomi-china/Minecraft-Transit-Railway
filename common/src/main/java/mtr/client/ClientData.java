@@ -2,7 +2,21 @@ package mtr.client;
 
 import mtr.KeyMappings;
 import mtr.MTRClient;
-import mtr.data.*;
+import mtr.data.DataConverter;
+import mtr.data.Depot;
+import mtr.data.LiftClient;
+import mtr.data.NameColorDataBase;
+import mtr.data.Platform;
+import mtr.data.Rail;
+import mtr.data.RailwayData;
+import mtr.data.Route;
+import mtr.data.ScheduleEntry;
+import mtr.data.SerializedDataBase;
+import mtr.data.Siding;
+import mtr.data.SignalBlocks;
+import mtr.data.Station;
+import mtr.data.TrainClient;
+import mtr.data.TransportMode;
 import mtr.mappings.Text;
 import mtr.packet.PacketTrainDataGuiClient;
 import net.minecraft.client.Minecraft;
@@ -13,7 +27,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 
 public final class ClientData {
@@ -41,8 +62,11 @@ public final class ClientData {
 	public static final Map<BlockPos, Map<BlockPos, Rail>> RAILS = new HashMap<>();
 
 	private static final Map<BlockPos, Map<BlockPos, Rail>> pendingRailMerge = new HashMap<>();
-	private static long pendingRailTimestamp;
-	private static final long RAIL_MERGE_DELAY_MS = 500;
+	private static long pendingRailsPacketId = -1;
+	private static int pendingRailsTotalChunks;
+	private static int pendingRailsChunkCount;
+	private static long pendingRailsStartMillis;
+	private static final long PENDING_RAILS_TIMEOUT_MS = 3000;
 	public static final Set<TrainClient> TRAINS = new HashSet<>();
 	public static final List<DataConverter> RAIL_ACTIONS = new ArrayList<>();
 	public static final Map<Long, Set<ScheduleEntry>> SCHEDULES_FOR_PLATFORM = new HashMap<>();
@@ -52,13 +76,8 @@ public final class ClientData {
 	private static final Map<UUID, Integer> PLAYER_RIDING_COOL_DOWN = new HashMap<>();
 
 	public static void tick() {
-		if (pendingRailTimestamp > 0 && System.currentTimeMillis() - pendingRailTimestamp > RAIL_MERGE_DELAY_MS) {
-			RAILS.clear();
-			for (final Map.Entry<BlockPos, Map<BlockPos, Rail>> entry : pendingRailMerge.entrySet()) {
-				RAILS.put(entry.getKey(), entry.getValue());
-			}
-			pendingRailMerge.clear();
-			pendingRailTimestamp = 0;
+		if (pendingRailsChunkCount > 0 && System.currentTimeMillis() - pendingRailsStartMillis > PENDING_RAILS_TIMEOUT_MS) {
+			commitPendingRails(true);
 		}
 
 		final Set<UUID> playersToRemove = new HashSet<>();
@@ -95,25 +114,49 @@ public final class ClientData {
 	}
 
 	public static void writeRails(Minecraft client, FriendlyByteBuf packet) {
+		final long packetId = packet.readLong();
+		final int totalChunks = packet.readInt();
+		final int chunkIndex = packet.readInt();
 		final Map<BlockPos, Map<BlockPos, Rail>> railsTemp = readRailsFromPacket(packet);
 		client.execute(() -> {
-			pendingRailMerge.clear();
-			for (final Map.Entry<BlockPos, Map<BlockPos, Rail>> entry : railsTemp.entrySet()) {
-				pendingRailMerge.put(entry.getKey(), entry.getValue());
+			if (packetId != pendingRailsPacketId || totalChunks != pendingRailsTotalChunks) {
+				pendingRailsPacketId = packetId;
+				pendingRailsTotalChunks = totalChunks;
+				pendingRailsChunkCount = 0;
+				pendingRailMerge.clear();
+				pendingRailsStartMillis = System.currentTimeMillis();
 			}
-			pendingRailTimestamp = System.currentTimeMillis();
+			pendingRailMerge.putAll(railsTemp);
+			pendingRailsChunkCount++;
+			commitPendingRails(false);
 		});
 	}
 
 	public static void appendRails(Minecraft client, FriendlyByteBuf packet) {
+		final long packetId = packet.readLong();
+		final int totalChunks = packet.readInt();
+		final int chunkIndex = packet.readInt();
 		final Map<BlockPos, Map<BlockPos, Rail>> railsTemp = readRailsFromPacket(packet);
 		client.execute(() -> {
-			if (pendingRailTimestamp > 0) {
-				for (final Map.Entry<BlockPos, Map<BlockPos, Rail>> entry : railsTemp.entrySet()) {
-					pendingRailMerge.put(entry.getKey(), entry.getValue());
-				}
+			if (packetId != pendingRailsPacketId || pendingRailsChunkCount == 0) {
+				return;
 			}
+			pendingRailMerge.putAll(railsTemp);
+			pendingRailsChunkCount++;
+			commitPendingRails(false);
 		});
+	}
+
+	private static void commitPendingRails(boolean force) {
+		if (force || pendingRailsChunkCount >= pendingRailsTotalChunks) {
+			RAILS.clear();
+			RAILS.putAll(pendingRailMerge);
+			pendingRailMerge.clear();
+			pendingRailsPacketId = -1;
+			pendingRailsTotalChunks = 0;
+			pendingRailsChunkCount = 0;
+			pendingRailsStartMillis = 0;
+		}
 	}
 
 	private static Map<BlockPos, Map<BlockPos, Rail>> readRailsFromPacket(FriendlyByteBuf packet) {

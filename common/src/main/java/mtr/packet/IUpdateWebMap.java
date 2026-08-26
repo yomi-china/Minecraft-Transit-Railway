@@ -6,7 +6,7 @@ import mtr.data.IGui;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Tuple;
 
-import java.awt.*;
+import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;

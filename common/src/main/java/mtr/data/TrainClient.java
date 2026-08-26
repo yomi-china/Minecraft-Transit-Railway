@@ -1,7 +1,11 @@
 package mtr.data;
 
 import mtr.MTRClient;
-import mtr.client.*;
+import mtr.client.ClientData;
+import mtr.client.Config;
+import mtr.client.ScrollingText;
+import mtr.client.TrainClientRegistry;
+import mtr.client.TrainProperties;
 import mtr.render.RenderDrivingOverlay;
 import mtr.render.TrainRendererBase;
 import mtr.sound.TrainSoundBase;
@@ -17,7 +21,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class TrainClient extends Train implements IGui {
 

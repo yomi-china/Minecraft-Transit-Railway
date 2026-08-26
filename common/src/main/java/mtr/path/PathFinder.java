@@ -1,10 +1,22 @@
 package mtr.path;
 
-import mtr.data.*;
+import mtr.data.DataCache;
+import mtr.data.Platform;
+import mtr.data.Rail;
+import mtr.data.RailAngle;
+import mtr.data.RailType;
+import mtr.data.RailwayData;
+import mtr.data.SavedRailBase;
+import mtr.data.TransportMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public class PathFinder {

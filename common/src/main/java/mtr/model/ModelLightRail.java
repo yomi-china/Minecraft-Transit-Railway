@@ -2,7 +2,11 @@ package mtr.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import mtr.client.*;
+import mtr.client.ClientCache;
+import mtr.client.ClientData;
+import mtr.client.DoorAnimationType;
+import mtr.client.RouteMapGenerator;
+import mtr.client.ScrollingText;
 import mtr.data.Route;
 import mtr.data.Station;
 import mtr.mappings.ModelDataWrapper;

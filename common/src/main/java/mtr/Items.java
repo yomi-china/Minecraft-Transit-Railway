@@ -2,7 +2,19 @@ package mtr;
 
 import mtr.data.RailType;
 import mtr.data.TransportMode;
-import mtr.item.*;
+import mtr.item.ItemBridgeCreator;
+import mtr.item.ItemDashboard;
+import mtr.item.ItemEscalator;
+import mtr.item.ItemLiftButtonsLinkModifier;
+import mtr.item.ItemLiftRefresher;
+import mtr.item.ItemPSDAPGBase;
+import mtr.item.ItemRailDataEditor;
+import mtr.item.ItemRailModifier;
+import mtr.item.ItemResourcePackCreator;
+import mtr.item.ItemSignalModifier;
+import mtr.item.ItemTunnelCreator;
+import mtr.item.ItemTunnelWallCreator;
+import mtr.item.ItemWithCreativeTabBase;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 
@@ -12,6 +24,7 @@ public interface Items {
 	RegistryObject<Item> APG_GLASS = new RegistryObject<>(() -> new ItemPSDAPGBase(ItemPSDAPGBase.EnumPSDAPGItem.PSD_APG_GLASS, ItemPSDAPGBase.EnumPSDAPGType.APG));
 	RegistryObject<Item> APG_GLASS_END = new RegistryObject<>(() -> new ItemPSDAPGBase(ItemPSDAPGBase.EnumPSDAPGItem.PSD_APG_GLASS_END, ItemPSDAPGBase.EnumPSDAPGType.APG));
 	RegistryObject<Item> BRUSH = new RegistryObject<>(() -> new ItemWithCreativeTabBase(Keys.LIFTS_ONLY ? CreativeModeTabs.ESCALATORS_LIFTS : CreativeModeTabs.CORE, properties -> properties.stacksTo(1)));
+	RegistryObject<Item> RAIL_DATA_EDITOR = new RegistryObject<>(ItemRailDataEditor::new);
 	RegistryObject<Item> RAILWAY_DASHBOARD = new RegistryObject<>(() -> new ItemDashboard(TransportMode.TRAIN));
 	RegistryObject<Item> BOAT_DASHBOARD = new RegistryObject<>(() -> new ItemDashboard(TransportMode.BOAT));
 	RegistryObject<Item> CABLE_CAR_DASHBOARD = new RegistryObject<>(() -> new ItemDashboard(TransportMode.CABLE_CAR));

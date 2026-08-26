@@ -2,7 +2,12 @@ package mtr.block;
 
 import mtr.Items;
 import mtr.MTR;
-import mtr.mappings.*;
+import mtr.mappings.BlockDirectionalMapper;
+import mtr.mappings.BlockEntityClientSerializableMapper;
+import mtr.mappings.BlockEntityMapper;
+import mtr.mappings.EntityBlockMapper;
+import mtr.mappings.Text;
+import mtr.mappings.TickableMapper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

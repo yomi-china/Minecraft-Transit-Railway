@@ -3,7 +3,14 @@ package mtr.screen;
 import com.mojang.blaze3d.vertex.PoseStack;
 import mtr.client.ClientData;
 import mtr.client.IDrawing;
-import mtr.data.*;
+import mtr.data.DataConverter;
+import mtr.data.Depot;
+import mtr.data.IGui;
+import mtr.data.NameColorDataBase;
+import mtr.data.RailwayData;
+import mtr.data.Route;
+import mtr.data.Siding;
+import mtr.data.TransportMode;
 import mtr.mappings.Text;
 import mtr.mappings.UtilitiesClient;
 import mtr.packet.PacketTrainDataGuiClient;
@@ -12,7 +19,12 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class EditDepotScreen extends EditNameColorScreenBase<Depot> {

@@ -71,7 +71,8 @@ public class RenderPSDAPGDoor<T extends BlockPSDAPGDoorBase.TileEntityPSDAPGDoor
 			case 0:
 			case 1:
 				if (half) {
-					RenderTrains.scheduleRender(new ResourceLocation(String.format("mtr:textures/block/light_%s.png", open > 0 ? "on" : "off")), false, open > 0 ? RenderTrains.QueuedRenderLayer.LIGHT : RenderTrains.QueuedRenderLayer.EXTERIOR, (matricesNew, vertexConsumer) -> {
+					final boolean doorLightOn = isDoorLightOn(entity);
+					RenderTrains.scheduleRender(new ResourceLocation(String.format("mtr:textures/block/light_%s.png", doorLightOn ? "on" : "off")), false, doorLightOn ? RenderTrains.QueuedRenderLayer.LIGHT : RenderTrains.QueuedRenderLayer.EXTERIOR, (matricesNew, vertexConsumer) -> {
 						storedMatrixTransformationsLight.transform(matricesNew);
 						(side ? MODEL_PSD_LIGHT_RIGHT : MODEL_PSD_LIGHT_LEFT).renderToBuffer(matricesNew, vertexConsumer, light, overlay, 1, 1, 1, 1);
 						matricesNew.popPose();
@@ -88,9 +89,10 @@ public class RenderPSDAPGDoor<T extends BlockPSDAPGDoorBase.TileEntityPSDAPGDoor
 				break;
 			case 2:
 				if (half) {
+					final boolean doorLightOn = isDoorLightOn(entity);
 					final Block block = world.getBlockState(pos.relative(side ? facing.getClockWise() : facing.getCounterClockWise())).getBlock();
 					if (block instanceof BlockAPGGlass || block instanceof BlockAPGGlassEnd) {
-						RenderTrains.scheduleRender(new ResourceLocation(String.format("mtr:textures/block/apg_door_light_%s.png", open > 0 ? "on" : "off")), false, open > 0 ? RenderTrains.QueuedRenderLayer.LIGHT_TRANSLUCENT : RenderTrains.QueuedRenderLayer.EXTERIOR, (matricesNew, vertexConsumer) -> {
+						RenderTrains.scheduleRender(new ResourceLocation(String.format("mtr:textures/block/apg_door_light_%s.png", doorLightOn ? "on" : "off")), false, doorLightOn ? RenderTrains.QueuedRenderLayer.LIGHT_TRANSLUCENT : RenderTrains.QueuedRenderLayer.EXTERIOR, (matricesNew, vertexConsumer) -> {
 							storedMatrixTransformationsLight.transform(matricesNew);
 							matricesNew.translate(side ? -0.515625 : 0.515625, 0, 0);
 							matricesNew.scale(0.5F, 1, 1);
@@ -171,6 +173,17 @@ public class RenderPSDAPGDoor<T extends BlockPSDAPGDoorBase.TileEntityPSDAPGDoor
 	@Override
 	public boolean shouldRenderOffScreen(T blockEntity) {
 		return true;
+	}
+
+	private boolean isDoorLightOn(T entity) {
+		final int openValue = entity.getOpenValue();
+		if (openValue <= 0) {
+			return false;
+		} else if (openValue >= BlockPSDAPGDoorBase.MAX_OPEN_VALUE) {
+			return true;
+		} else {
+			return (System.currentTimeMillis() / 500) % 2 == 0;
+		}
 	}
 
 	private static class ModelSingleCube extends EntityModel<Entity> {

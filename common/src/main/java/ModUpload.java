@@ -1,4 +1,9 @@
-import com.jonafanho.apitools.*;
+import com.jonafanho.apitools.DependencyType;
+import com.jonafanho.apitools.ModId;
+import com.jonafanho.apitools.ModLoader;
+import com.jonafanho.apitools.ModProvider;
+import com.jonafanho.apitools.NetworkUtils;
+import com.jonafanho.apitools.ReleaseStatus;
 
 import java.io.IOException;
 import java.util.Collections;

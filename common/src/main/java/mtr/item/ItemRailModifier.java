@@ -1,7 +1,11 @@
 package mtr.item;
 
 import mtr.block.BlockNode;
-import mtr.data.*;
+import mtr.data.Rail;
+import mtr.data.RailAngle;
+import mtr.data.RailType;
+import mtr.data.RailwayData;
+import mtr.data.TransportMode;
 import mtr.mappings.Text;
 import mtr.packet.PacketTrainDataGuiServer;
 import net.minecraft.ChatFormatting;

@@ -27,7 +27,7 @@ public class PlatformScreen extends SavedRailScreenBase<Platform> {
 		sliderAdcTimeMin = new WidgetShorterSlider(0, 0, (int) Math.floor(Platform.MAX_ADC_TIME / 2F / SECONDS_PER_MINUTE), value -> Text.translatable("gui.mtr.arrival_min", value).getString(), null);
 		sliderAdcTimeSec = new WidgetShorterSlider(0, 0, SECONDS_PER_MINUTE * 2 - 1, 10, 2, value -> Text.translatable("gui.mtr.arrival_sec", value / 2F).getString(), null);
 		buttonPsdDisplayMode = new ButtonMapper(0, 0, 0, SQUARE_SIZE / 2, Text.literal(""), button -> {
-			psdDisplayModeTemp = (psdDisplayModeTemp + 1) % 2;
+			psdDisplayModeTemp = (psdDisplayModeTemp + 1) % 3;
 			button.setMessage(Text.translatable("gui.mtr.psd_display_mode_" + psdDisplayModeTemp));
 		}) {};
 	}

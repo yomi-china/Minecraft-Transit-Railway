@@ -17,7 +17,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class BlockLiftTrack extends BlockDirectionalMapper {
 
 	public BlockLiftTrack() {
-		super(Properties.of(Material.METAL, MaterialColor.COLOR_GRAY).requiresCorrectToolForDrops().strength(2));
+		super(BlockBehaviour.Properties.of(Material.METAL, MaterialColor.COLOR_GRAY).requiresCorrectToolForDrops().strength(2));
 	}
 
 	@Override
